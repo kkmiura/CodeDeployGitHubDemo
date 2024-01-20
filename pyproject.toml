@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "codedeploygithubdemo"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.12.1"
+ruff = "^0.1.14"
+aws-cdk-lib = "^2.122.0"
+
+[tool.ruff]
+target-version = "py312"
+include = ["*.py"]
+line-length = 119
+
+# isort用の設定
+[tool.ruff.isort]
+combine-as-imports = true
+known-first-party = ["musubi_restapi"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+split-on-trailing-comma = true
+
+# black用の設定
+[tool.ruff.format]
+quote-style = "double"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

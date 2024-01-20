@@ -1,0 +1,11 @@
+version: '3'
+services:
+  infra:
+    build: .
+    tty: true
+    environment:
+      - AWS_PROFILE=default
+    volumes:
+      - ./:/workspace/
+      - ~/.aws/credentials:/root/.aws/credentials:ro
+      - ~/.aws/config:/root/.aws/config:ro
