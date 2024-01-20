@@ -1,9 +1,5 @@
 name: s3-deploy-sample
-on:
-  pull_request:
-    branches:
-      - master
-    types: [opened, synchronize, closed]
+on:  push
 
 jobs:
   UploadStaticFiles:
