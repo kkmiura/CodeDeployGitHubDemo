@@ -46,7 +46,7 @@ class AppStack(Stack):
         # CI/CD 周り
         artifacts_bucket = s3.Bucket(self, "ArtifactsBucket")
         project = codebuild.Project(
-            self, "Project", source=codebuild.Source.s3(bucket=artifacts_bucket, path="artifact.zip")
+            self, "Project", source=codebuild.Source.s3(bucket=artifacts_bucket, path="artifacts.zip")
         )
         code_deploy_role = iam.Role(
             self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
