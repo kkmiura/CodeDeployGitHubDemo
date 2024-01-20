@@ -1,7 +1,9 @@
 from aws_cdk import (
-    # Duration,
     Stack,
+    Tags,
+    aws_codedeploy as codedeploy,
     aws_ec2 as ec2,
+    aws_iam as iam,
 )
 from constructs import Construct
 
@@ -36,4 +38,18 @@ class AppStack(Stack):
             vpc_subnets={"subnet_type": ec2.SubnetType.PUBLIC},
             propagate_tags_to_volume_on_creation=True,
             ssm_session_permissions=True,
+        )
+        Tags.of(instance).add("env", "demo")
+
+        code_deploy_role = iam.Role(
+            self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
+        )
+        application = codedeploy.ServerApplication(self, "CodeDeployApplication", application_name="github-handson")
+        deployment_group = codedeploy.ServerDeploymentGroup(
+            self,
+            "CodeDeployDeploymentGroup",
+            application=application,
+            deployment_group_name="HandsonDeploymentGroup",
+            install_agent=True,
+            ec2_instance_tags=codedeploy.InstanceTagSet({"env": ["demo"]}),
         )
