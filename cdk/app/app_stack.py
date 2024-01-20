@@ -1,9 +1,11 @@
 from aws_cdk import (
     Stack,
     Tags,
+    aws_codebuild as codebuild,
     aws_codedeploy as codedeploy,
     aws_ec2 as ec2,
     aws_iam as iam,
+    aws_s3 as s3,
 )
 from constructs import Construct
 
@@ -12,7 +14,7 @@ class AppStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        # api.RestApi(self, "CodeBuildApi")
 
         vpc = ec2.Vpc(
             self,
@@ -41,6 +43,11 @@ class AppStack(Stack):
         )
         Tags.of(instance).add("env", "demo")
 
+        # CI/CD 周り
+        artifacts_bucket = s3.Bucket(self, "ArtifactsBucket")
+        project = codebuild.Project(
+            self, "Project", source=codebuild.Source.s3(bucket=artifacts_bucket, path="artifact.zip")
+        )
         code_deploy_role = iam.Role(
             self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
         )
