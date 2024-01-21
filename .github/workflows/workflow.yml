@@ -12,7 +12,7 @@ jobs:
         env:
           AWS_SECRET_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          BUCKET_NAME: appstack-artifactsbucket2aac5544-dvjtospfje6g
+          BUCKET_NAME: appstack-sourcebucketddd2130a-y9entrhekxqz
           AWS_REGION: ap-northeast-1
           SOURCE_MODE: ZIP
           SOURCE_PATH: ./
