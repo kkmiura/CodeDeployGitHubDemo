@@ -2,4 +2,4 @@ Version: 0.2
 phases:
  build:
    commands:
-     - echo "Test"
+     - ls -al
