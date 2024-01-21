@@ -41,6 +41,7 @@ class AppStack(Stack):
             vpc_subnets={"subnet_type": ec2.SubnetType.PUBLIC},
             propagate_tags_to_volume_on_creation=True,
             ssm_session_permissions=True,
+            role=instance_role,
         )
         Tags.of(instance).add("env", "demo")
 
@@ -70,7 +71,11 @@ class AppStack(Stack):
         )
         instance_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["s3:Get*", "s3:List"], resources=["arn:aws:s3:::codepipeline-ap-northeast-1-*"]
+                actions=["s3:Get*", "s3:List*"],
+                resources=[
+                    "arn:aws:s3:::appstack-pipelineartifactsbucket*/*",
+                    "arn:aws:s3:::aws-codepipeline-ap-northeast-1/*",
+                ],
             )
         )
 
