@@ -14,3 +14,8 @@ aws ssm send-command \
     --instance-ids "<インスタンスID>" \
     --parameters '{"action":["Install"],"installationType":["Uninstall and reinstall"],"name":["AWSCodeDeployAgent"]}'
 ```
+
+## 注意点
+
+- インスタンスに付与する IAM ロールに KMS へのアクセス権が必要
+
