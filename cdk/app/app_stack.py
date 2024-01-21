@@ -30,7 +30,6 @@ class AppStack(Stack):
                 )
             ],
         )
-        # ec2_sg = ec2.SecurityGroup(self, "Ec2Sg", allow_all_outbound=True)
         instance = ec2.Instance(
             self,
             "Instance",
@@ -44,9 +43,10 @@ class AppStack(Stack):
         Tags.of(instance).add("env", "demo")
 
         # CI/CD 周り
+        ## Source ステージ
         source_bucket = s3.Bucket(self, "SourceBucket", versioned=True)
         artifacts = codepipeline.Artifact("Artifact")
-        key = "source"
+        key = "artifacts.zip"
         trail = cloudtrail.Trail(self, "CloudTrail")
         trail.add_s3_event_selector(
             [cloudtrail.S3EventSelector(bucket=source_bucket, object_prefix=key)],
@@ -59,10 +59,15 @@ class AppStack(Stack):
             output=artifacts,
             trigger=codepipeline_action.S3Trigger.EVENTS,
         )
+
+        ## Build ステージ
         project = codebuild.PipelineProject(self, id="build-project", project_name="Project")
-        # code_deploy_role = iam.Role(
-        #     self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
-        # )
+        build_output = codepipeline.Artifact("BuildArtifact")
+        build_action = codepipeline_action.CodeBuildAction(
+            action_name="build", project=project, input=artifacts, outputs=[build_output]
+        )
+
+        ## Deploy ステージ
         application = codedeploy.ServerApplication(self, "CodeDeployApplication", application_name="github-handson")
         deployment_group = codedeploy.ServerDeploymentGroup(
             self,
@@ -72,13 +77,11 @@ class AppStack(Stack):
             install_agent=True,
             ec2_instance_tags=codedeploy.InstanceTagSet({"env": ["demo"]}),
         )
-        build_output = codepipeline.Artifact("BuildArtifact")
-        build_action = codepipeline_action.CodeBuildAction(
-            action_name="build", project=project, input=artifacts, outputs=[build_output]
-        )
         deploy_action = codepipeline_action.CodeDeployServerDeployAction(
-            action_name="deploy", deployment_group=deployment_group, input=artifacts
+            action_name="deploy", deployment_group=deployment_group, input=build_output
         )
+
+        ## Pipeline
         pipeline = codepipeline.Pipeline(self, "Pipeline", pipeline_name="pipeline")
         pipeline.add_stage(stage_name="source", actions=[source_action])
         pipeline.add_stage(stage_name="build", actions=[build_action])
