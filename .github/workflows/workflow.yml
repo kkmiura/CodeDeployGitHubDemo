@@ -3,17 +3,16 @@ on:  push
 
 jobs:
   UploadStaticFiles:
-    name: Upload static files
+    name: Upload Artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Upload ZIP to S3
-        uses: NotCoffee418/s3-zip-upload@v1.3
-        env:
-          AWS_SECRET_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          BUCKET_NAME: ${{ secrets.SOURCE_BUCKET }}
-          AWS_REGION: ap-northeast-1
-          SOURCE_MODE: ZIP
-          SOURCE_PATH: ./
-          DEST_FILE: artifacts.zip
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: S3 sync
+        working-directory: .
+        run: aws s3 sync . s3://${{ secrets.SOURCE_BUCKET }} --delete --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers --exclude ".git"
+
