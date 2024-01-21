@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_codepipeline as codepipeline,
     aws_codepipeline_actions as codepipeline_action,
     aws_ec2 as ec2,
+    aws_iam as iam,
     aws_s3 as s3,
 )
 from constructs import Construct
@@ -30,6 +31,7 @@ class AppStack(Stack):
                 )
             ],
         )
+        instance_role = iam.Role(self, "InstanceRole", assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"))
         instance = ec2.Instance(
             self,
             "Instance",
@@ -65,6 +67,11 @@ class AppStack(Stack):
         build_output = codepipeline.Artifact("BuildArtifact")
         build_action = codepipeline_action.CodeBuildAction(
             action_name="build", project=project, input=artifacts, outputs=[build_output]
+        )
+        instance_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["s3:Get*", "s3:List"], resources=["arn:aws:s3:::codepipeline-ap-northeast-1-*"]
+            )
         )
 
         ## Deploy ステージ
