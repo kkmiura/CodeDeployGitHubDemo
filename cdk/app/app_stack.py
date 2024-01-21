@@ -1,10 +1,12 @@
 from aws_cdk import (
     Stack,
     Tags,
+    aws_cloudtrail as cloudtrail,
     aws_codebuild as codebuild,
     aws_codedeploy as codedeploy,
+    aws_codepipeline as codepipeline,
+    aws_codepipeline_actions as codepipeline_action,
     aws_ec2 as ec2,
-    aws_iam as iam,
     aws_s3 as s3,
 )
 from constructs import Construct
@@ -13,8 +15,6 @@ from constructs import Construct
 class AppStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        # api.RestApi(self, "CodeBuildApi")
 
         vpc = ec2.Vpc(
             self,
@@ -44,13 +44,25 @@ class AppStack(Stack):
         Tags.of(instance).add("env", "demo")
 
         # CI/CD 周り
-        artifacts_bucket = s3.Bucket(self, "ArtifactsBucket")
-        project = codebuild.Project(
-            self, "Project", source=codebuild.Source.s3(bucket=artifacts_bucket, path="artifacts.zip")
+        source_bucket = s3.Bucket(self, "SourceBucket", versioned=True)
+        artifacts = codepipeline.Artifact("Artifact")
+        key = "artifacts.zip"
+        trail = cloudtrail.Trail(self, "CloudTrail")
+        trail.add_s3_event_selector(
+            [cloudtrail.S3EventSelector(bucket=source_bucket, object_prefix=key)],
+            read_write_type=cloudtrail.ReadWriteType.WRITE_ONLY,
         )
-        code_deploy_role = iam.Role(
-            self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
+        source_action = codepipeline_action.S3SourceAction(
+            action_name="S3Source",
+            bucket=source_bucket,
+            bucket_key=key,
+            output=artifacts,
+            trigger=codepipeline_action.S3Trigger.EVENTS,
         )
+        project = codebuild.PipelineProject(self, id="build-project", project_name="Project")
+        # code_deploy_role = iam.Role(
+        #     self, "CodeDeployRole", assumed_by=iam.ServicePrincipal("codedeploy.amazonaws.com")
+        # )
         application = codedeploy.ServerApplication(self, "CodeDeployApplication", application_name="github-handson")
         deployment_group = codedeploy.ServerDeploymentGroup(
             self,
@@ -60,3 +72,14 @@ class AppStack(Stack):
             install_agent=True,
             ec2_instance_tags=codedeploy.InstanceTagSet({"env": ["demo"]}),
         )
+        build_output = codepipeline.Artifact("BuildArtifact")
+        build_action = codepipeline_action.CodeBuildAction(
+            action_name="build", project=project, input=artifacts, outputs=[build_output]
+        )
+        deploy_action = codepipeline_action.CodeDeployServerDeployAction(
+            action_name="deploy", deployment_group=deployment_group, input=artifacts
+        )
+        pipeline = codepipeline.Pipeline(self, "Pipeline", pipeline_name="pipeline")
+        pipeline.add_stage(stage_name="source", actions=[source_action])
+        pipeline.add_stage(stage_name="build", actions=[build_action])
+        pipeline.add_stage(stage_name="deploy", actions=[deploy_action])
