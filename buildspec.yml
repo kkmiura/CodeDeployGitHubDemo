@@ -2,4 +2,4 @@ Version: 0.2
 phases:
  build:
    commands:
-     - echo 'test!'
+     - unzip artifacts.zip -d build_artifact

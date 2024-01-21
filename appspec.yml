@@ -1,7 +1,7 @@
 version: 0.0
 os: linux
 files:
-  - source: /app/index.html
+  - source: /build_artifact/app/index.html
     destination: /var/www/html/
 hooks:
   BeforeInstall:
