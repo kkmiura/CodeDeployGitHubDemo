@@ -46,7 +46,7 @@ class AppStack(Stack):
         # CI/CD 周り
         source_bucket = s3.Bucket(self, "SourceBucket", versioned=True)
         artifacts = codepipeline.Artifact("Artifact")
-        key = "artifacts.zip"
+        key = "source"
         trail = cloudtrail.Trail(self, "CloudTrail")
         trail.add_s3_event_selector(
             [cloudtrail.S3EventSelector(bucket=source_bucket, object_prefix=key)],
